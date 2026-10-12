@@ -1,0 +1,15 @@
+{% if profile.avatar %}
+  <img
+    src="{{ profile.avatar.url }}"
+    class="rounded-circle flex-shrink-0"
+    width="{{ size|default:40 }}"
+    height="{{ size|default:40 }}"
+    style="object-fit:cover"
+    alt="{{ profile.user.username }}'s avatar">
+{% else %}
+  <div
+    class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold flex-shrink-0"
+    style="width:{{ size|default:40 }}px;height:{{ size|default:40 }}px;font-size:{{ size|default:40|add:'-14' }}px">
+    {{ profile.user.username.0|upper }}
+  </div>
+{% endif %}

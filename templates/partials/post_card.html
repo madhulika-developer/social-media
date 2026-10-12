@@ -1,0 +1,103 @@
+<!-- Post Card Partial -->
+<div class="card border-0 shadow-sm rounded-3 mb-3 post-card" id="post-{{ post.pk }}">
+  <div class="card-body">
+
+    <!-- Author row -->
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'profile' post.author.username %}">
+          {% include 'partials/avatar.html' with profile=post.author.profile size=42 %}
+        </a>
+        <div>
+          <a href="{% url 'profile' post.author.username %}" class="fw-bold text-dark text-decoration-none">
+            {{ post.author.get_full_name|default:post.author.username }}
+          </a>
+          <div class="text-muted small">@{{ post.author.username }} · {{ post.created_at|timesince }} ago</div>
+        </div>
+      </div>
+      {% if request.user == post.author %}
+      <div class="dropdown">
+        <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+        <ul class="dropdown-menu dropdown-menu-end shadow">
+          <li>
+            <form method="post" action="{% url 'post_delete' post.pk %}" onsubmit="return confirm('Delete this post?')">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete Post</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Content -->
+    <p class="mb-3" style="white-space:pre-wrap">{{ post.content }}</p>
+
+    <!-- Post Image -->
+    {% if post.image %}
+    <a href="{% url 'post_detail' post.pk %}">
+      <img src="{{ post.image.url }}" class="img-fluid rounded-3 mb-3 w-100" style="max-height:500px;object-fit:cover" alt="Post image">
+    </a>
+    {% endif %}
+
+    <!-- Action Bar -->
+    <div class="d-flex align-items-center gap-3 border-top pt-2 mt-2">
+      <!-- Like Button -->
+      <button
+        class="btn btn-sm btn-light like-btn d-flex align-items-center gap-1 {% if is_liked %}liked{% endif %}"
+        data-post-id="{{ post.pk }}">
+        <i class="bi {% if is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+        <span class="like-count">{{ post.get_likes_count }}</span>
+      </button>
+
+      <!-- Comment Button -->
+      <a href="{% url 'post_detail' post.pk %}" class="btn btn-sm btn-light d-flex align-items-center gap-1">
+        <i class="bi bi-chat"></i>
+        <span>{{ post.get_comments_count }}</span>
+      </a>
+
+      <!-- Share / Link -->
+      <button class="btn btn-sm btn-light ms-auto copy-link-btn" data-url="{% url 'post_detail' post.pk %}">
+        <i class="bi bi-share"></i>
+      </button>
+    </div>
+
+    <!-- Quick Comment Box -->
+    <div class="mt-3">
+      <!-- Top Comments -->
+      {% if top_comments %}
+      <div class="top-comments mb-2">
+        {% for comment in top_comments %}
+        <div class="d-flex gap-2 mb-2">
+          <a href="{% url 'profile' comment.author.username %}">
+            {% include 'partials/avatar.html' with profile=comment.author.profile size=28 %}
+          </a>
+          <div class="bg-light rounded-3 px-3 py-1 flex-grow-1">
+            <span class="fw-semibold small me-1">{{ comment.author.username }}</span>
+            <span class="small">{{ comment.content }}</span>
+          </div>
+        </div>
+        {% endfor %}
+        {% if post.get_comments_count > 3 %}
+        <a href="{% url 'post_detail' post.pk %}" class="text-muted small">View all {{ post.get_comments_count }} comments</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Inline comment form -->
+      <form class="d-flex gap-2 quick-comment-form" data-post-id="{{ post.pk }}">
+        {% csrf_token %}
+        <div class="flex-shrink-0">
+          {% include 'partials/avatar.html' with profile=request.user.profile size=28 %}
+        </div>
+        <div class="input-group input-group-sm">
+          <input type="text" name="content" class="form-control rounded-pill bg-light border-0" placeholder="Write a comment…" required>
+          <button type="submit" class="btn btn-primary rounded-pill ms-1 px-3">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>

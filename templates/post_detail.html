@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.author.username }}'s post – SocialApp{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <!-- Back -->
+      <a href="javascript:history.back()" class="btn btn-light btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i>Back</a>
+
+      <!-- Full Post -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <!-- Author -->
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <a href="{% url 'profile' post.author.username %}">
+                {% include 'partials/avatar.html' with profile=post.author.profile size=48 %}
+              </a>
+              <div>
+                <a href="{% url 'profile' post.author.username %}" class="fw-bold text-dark text-decoration-none">
+                  {{ post.author.get_full_name|default:post.author.username }}
+                </a>
+                <div class="text-muted small">@{{ post.author.username }} · {{ post.created_at|date:"M d, Y" }}</div>
+              </div>
+            </div>
+            {% if request.user == post.author %}
+            <div class="dropdown">
+              <button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
+              <ul class="dropdown-menu dropdown-menu-end shadow">
+                <li>
+                  <form method="post" action="{% url 'post_delete' post.pk %}" onsubmit="return confirm('Delete this post?')">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger"><i class="bi bi-trash me-2"></i>Delete Post</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+
+          <p style="white-space:pre-wrap; font-size:1.05rem">{{ post.content }}</p>
+
+          {% if post.image %}
+          <img src="{{ post.image.url }}" class="img-fluid rounded-3 w-100 mb-3" style="max-height:600px;object-fit:cover" alt="">
+          {% endif %}
+
+          <!-- Like / Comment counts -->
+          <div class="d-flex gap-3 text-muted small border-top pt-2 mb-2">
+            <span><b class="text-dark">{{ post.get_likes_count }}</b> Likes</span>
+            <span><b class="text-dark">{{ post.get_comments_count }}</b> Comments</span>
+          </div>
+
+          <!-- Action bar -->
+          <div class="d-flex gap-2">
+            <button
+              class="btn btn-sm btn-light flex-grow-1 like-btn {% if is_liked %}liked{% endif %}"
+              data-post-id="{{ post.pk }}">
+              <i class="bi {% if is_liked %}bi-heart-fill text-danger{% else %}bi-heart{% endif %} me-1"></i>
+              <span class="like-count">{{ post.get_likes_count }}</span> Like
+            </button>
+            <button class="btn btn-sm btn-light flex-grow-1" onclick="document.getElementById('comment-input').focus()">
+              <i class="bi bi-chat me-1"></i>Comment
+            </button>
+            <button class="btn btn-sm btn-light copy-link-btn" data-url="{{ request.path }}">
+              <i class="bi bi-share me-1"></i>Share
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comments Section -->
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h6 class="fw-bold mb-4">Comments</h6>
+
+          <!-- Comment form -->
+          <form method="post" action="{% url 'add_comment' post.pk %}" class="d-flex gap-2 mb-4 quick-comment-form" data-post-id="{{ post.pk }}">
+            {% csrf_token %}
+            <div class="flex-shrink-0">
+              {% include 'partials/avatar.html' with profile=request.user.profile size=36 %}
+            </div>
+            <div class="input-group">
+              <input id="comment-input" type="text" name="content" class="form-control bg-light border-0 rounded-pill" placeholder="Write a comment…" required>
+              <button type="submit" class="btn btn-primary rounded-pill ms-2 px-3"><i class="bi bi-send-fill"></i></button>
+            </div>
+          </form>
+
+          <!-- Comments list -->
+          <div id="comments-list">
+            {% for comment in comments %}
+            <div class="comment-thread mb-3" id="comment-{{ comment.pk }}">
+              <div class="d-flex gap-2">
+                <a href="{% url 'profile' comment.author.username %}">
+                  {% include 'partials/avatar.html' with profile=comment.author.profile size=36 %}
+                </a>
+                <div class="flex-grow-1">
+                  <div class="bg-light rounded-3 px-3 py-2">
+                    <div class="d-flex justify-content-between">
+                      <a href="{% url 'profile' comment.author.username %}" class="fw-semibold text-dark text-decoration-none small">
+                        {{ comment.author.username }}
+                      </a>
+                      <span class="text-muted" style="font-size:11px">{{ comment.created_at|timesince }} ago</span>
+                    </div>
+                    <p class="mb-0 small mt-1">{{ comment.content }}</p>
+                  </div>
+                  <div class="d-flex gap-2 mt-1 ms-2">
+                    <button class="btn btn-sm p-0 text-muted reply-toggle" style="font-size:12px" data-comment-id="{{ comment.pk }}">
+                      <i class="bi bi-reply me-1"></i>Reply
+                    </button>
+                    {% if request.user == comment.author %}
+                    <form method="post" action="{% url 'delete_comment' comment.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm p-0 text-danger" style="font-size:12px">
+                        <i class="bi bi-trash me-1"></i>Delete
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+
+                  <!-- Reply Form (hidden) -->
+                  <form method="post" action="{% url 'add_comment' post.pk %}" class="reply-form d-none mt-2 d-flex gap-2 quick-comment-form" data-post-id="{{ post.pk }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_id" value="{{ comment.pk }}">
+                    <div class="input-group input-group-sm">
+                      <input type="text" name="content" class="form-control bg-light border-0 rounded-pill" placeholder="Write a reply…" required>
+                      <button type="submit" class="btn btn-primary btn-sm rounded-pill ms-1 px-3"><i class="bi bi-send-fill"></i></button>
+                    </div>
+                  </form>
+
+                  <!-- Replies -->
+                  {% for reply in comment.replies.all %}
+                  <div class="d-flex gap-2 mt-2 ms-3" id="comment-{{ reply.pk }}">
+                    <a href="{% url 'profile' reply.author.username %}">
+                      {% include 'partials/avatar.html' with profile=reply.author.profile size=28 %}
+                    </a>
+                    <div class="flex-grow-1">
+                      <div class="bg-light rounded-3 px-3 py-2">
+                        <div class="d-flex justify-content-between">
+                          <a href="{% url 'profile' reply.author.username %}" class="fw-semibold text-dark text-decoration-none" style="font-size:12px">
+                            {{ reply.author.username }}
+                          </a>
+                          <span class="text-muted" style="font-size:10px">{{ reply.created_at|timesince }} ago</span>
+                        </div>
+                        <p class="mb-0 mt-1" style="font-size:13px">{{ reply.content }}</p>
+                      </div>
+                      {% if request.user == reply.author %}
+                      <form method="post" action="{% url 'delete_comment' reply.pk %}" class="ms-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm p-0 text-danger" style="font-size:11px">
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </form>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3">No comments yet. Be the first! 💬</p>
+            {% endfor %}
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle reply forms
+document.querySelectorAll('.reply-toggle').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const commentDiv = this.closest('.comment-thread');
+    const replyForm = commentDiv.querySelector('.reply-form');
+    replyForm.classList.toggle('d-none');
+    if (!replyForm.classList.contains('d-none')) {
+      replyForm.querySelector('input[name="content"]').focus();
+    }
+  });
+});
+</script>
+{% endblock %}

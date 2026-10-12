@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Search – SocialApp{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <!-- Search Bar -->
+      <form action="{% url 'search' %}" method="get" class="mb-4">
+        <div class="input-group shadow-sm">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ query }}"
+                 class="form-control border-start-0 fs-5 py-3"
+                 placeholder="Search for people or posts…" autofocus>
+          <button type="submit" class="btn btn-primary px-4 fw-semibold">Search</button>
+        </div>
+      </form>
+
+      {% if query %}
+        <!-- People results -->
+        {% if users %}
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+          <div class="card-body">
+            <h6 class="fw-bold mb-3"><i class="bi bi-people me-2 text-primary"></i>People ({{ users|length }})</h6>
+            {% for u in users %}
+            <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+              <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'profile' u.username %}">
+                  {% include 'partials/avatar.html' with profile=u.profile size=48 %}
+                </a>
+                <div>
+                  <a href="{% url 'profile' u.username %}" class="fw-bold text-dark text-decoration-none">
+                    {{ u.get_full_name|default:u.username }}
+                  </a>
+                  <div class="text-muted small">@{{ u.username }}</div>
+                  {% if u.profile.bio %}
+                  <div class="text-muted small">{{ u.profile.bio|truncatechars:60 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+              <button class="btn btn-sm follow-btn {% if u.is_followed %}btn-secondary{% else %}btn-outline-primary{% endif %}"
+                      data-username="{{ u.username }}"
+                      data-following="{{ u.is_followed|lower }}">
+                {% if u.is_followed %}Following{% else %}Follow{% endif %}
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Post results -->
+        {% if posts %}
+        <h6 class="fw-bold text-muted mb-3"><i class="bi bi-file-text me-2"></i>Posts ({{ posts|length }})</h6>
+        {% for post in posts %}
+          {% include 'partials/post_card.html' with post=post comment_form=None is_liked=False top_comments=None %}
+        {% endfor %}
+        {% endif %}
+
+        {% if not users and not posts %}
+        <div class="card border-0 shadow-sm rounded-3 text-center py-5 text-muted">
+          <i class="bi bi-search fs-1 mb-3"></i>
+          <h5>No results for "{{ query }}"</h5>
+          <p>Try searching for something else</p>
+        </div>
+        {% endif %}
+
+      {% else %}
+        <div class="card border-0 shadow-sm rounded-3 text-center py-5 text-muted">
+          <i class="bi bi-search fs-1 mb-3 text-primary"></i>
+          <h5>Search SocialApp</h5>
+          <p>Find people and posts</p>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

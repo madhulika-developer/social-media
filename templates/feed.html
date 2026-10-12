@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Feed – SocialApp{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center g-4">
+
+    <!-- ── Left: Feed ─────────────────────────────────────────────── -->
+    <div class="col-lg-6">
+
+      <!-- Create Post Card -->
+      <div class="card border-0 shadow-sm mb-4 rounded-3">
+        <div class="card-body p-3">
+          <div class="d-flex gap-3 align-items-start">
+            <a href="{% url 'profile' user.username %}">
+              {% include 'partials/avatar.html' with profile=user.profile size=40 %}
+            </a>
+            <div class="flex-grow-1">
+              <form method="post" enctype="multipart/form-data" id="createPostForm">
+                {% csrf_token %}
+                {{ post_form.content }}
+                <div id="imagePreviewWrapper" class="mt-2 d-none">
+                  <img id="imagePreview" class="rounded img-fluid mb-2" style="max-height:300px" />
+                  <button type="button" id="removeImage" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-x-lg"></i> Remove
+                  </button>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <label for="{{ post_form.image.id_for_label }}" class="btn btn-light btn-sm">
+                    <i class="bi bi-image text-success me-1"></i>Photo
+                    {{ post_form.image }}
+                  </label>
+                  <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold">
+                    <i class="bi bi-send me-1"></i>Post
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Posts Feed -->
+      {% for item in posts_data %}
+        {% include 'partials/post_card.html' with post=item.post comment_form=item.comment_form is_liked=item.is_liked top_comments=item.top_comments %}
+      {% empty %}
+        <div class="card border-0 shadow-sm rounded-3 text-center py-5">
+          <i class="bi bi-people fs-1 text-muted mb-3"></i>
+          <h5 class="text-muted">Your feed is empty</h5>
+          <p class="text-muted">Follow some people to see their posts here!</p>
+          <a href="{% url 'search' %}" class="btn btn-primary mx-auto" style="width:fit-content">
+            Discover People
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── Right: Suggestions Sidebar ─────────────────────────────── -->
+    <div class="col-lg-3 d-none d-lg-block">
+      <!-- Profile mini card -->
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <a href="{% url 'profile' user.username %}">
+              {% include 'partials/avatar.html' with profile=user.profile size=48 %}
+            </a>
+            <div>
+              <a href="{% url 'profile' user.username %}" class="fw-bold text-dark text-decoration-none">
+                {{ user.get_full_name|default:user.username }}
+              </a>
+              <div class="text-muted small">@{{ user.username }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggestions -->
+      {% if suggestions %}
+      <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-body">
+          <h6 class="fw-bold text-muted mb-3">Suggested for You</h6>
+          {% for suggestion in suggestions %}
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-2">
+              <a href="{% url 'profile' suggestion.username %}">
+                {% include 'partials/avatar.html' with profile=suggestion.profile size=36 %}
+              </a>
+              <div>
+                <a href="{% url 'profile' suggestion.username %}" class="fw-semibold text-dark text-decoration-none small">
+                  {{ suggestion.username }}
+                </a>
+                <div class="text-muted" style="font-size:11px">{{ suggestion.profile.location|default:"SocialApp user" }}</div>
+              </div>
+            </div>
+            <button
+              class="btn btn-outline-primary btn-sm follow-btn"
+              data-username="{{ suggestion.username }}"
+              data-following="false">
+              Follow
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image preview
+const imageInput = document.querySelector('input[type="file"]');
+if (imageInput) {
+  imageInput.classList.add('d-none');
+  imageInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('imagePreview').src = e.target.result;
+        document.getElementById('imagePreviewWrapper').classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  document.getElementById('removeImage')?.addEventListener('click', () => {
+    imageInput.value = '';
+    document.getElementById('imagePreviewWrapper').classList.add('d-none');
+  });
+}
+</script>
+{% endblock %}
