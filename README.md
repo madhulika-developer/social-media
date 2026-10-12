@@ -74,3 +74,9 @@ social-media/                  # Root Repository Directory
 ├── render.yaml                # Render platform blueprints
 └── requirements.txt           # Python application dependencies
 ```
+## 🔗 Live Deployment
+
+The application is deployed live and fully functional on Render Cloud Infrastructure:
+👉 **[Launch SocialApp Live Demo](https://social-media-17x9.onrender.com)**
+
+---
