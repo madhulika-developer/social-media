@@ -39,3 +39,38 @@ A clean, modern, responsive full-stack social media web application built using 
    ```bash
    python manage.py runserver
    ```
+## 📁 Project Structure
+
+Here is an overview of how the files and directories are organized in this repository:
+
+```text
+social-media/                  # Root Repository Directory
+│
+├── socialapp/                 # Inner Django Project Directory
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py            # Global project configurations
+│   ├── urls.py                # Main routing and URL patterns
+│   └── wsgi.py                # WSGI entry-point for Gunicorn
+│
+├── core/                      # Application Component Directory
+│   ├── migrations/            # Database schema histories
+│   ├── __init__.py
+│   ├── admin.py               # Admin portal definitions
+│   ├── apps.py
+│   ├── models.py              # User, Profile, and Post data schemas
+│   ├── tests.py
+│   └── views.py               # Feed generation and auth logistics
+│
+├── static/                    # Global Asset Storage (CSS, JS, Images)
+├── templates/                 # Frontend UI Views (HTML templates)
+│   ├── feed.html              # Core timeline template
+│   ├── login.html             # User authorization interface
+│   └── register.html          # Registration form page
+│
+├── build.sh                   # Deployment script execution sequences
+├── manage.py                  # Django administrative command utility
+├── Procfile                   # Server setup commands for deployment
+├── render.yaml                # Render platform blueprints
+└── requirements.txt           # Python application dependencies
+```
